@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testimonials Wall</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --card: #121827;
+    --border: #232d45;
+    --text: #e8ecf7;
+    --muted: #8f9bb8;
+    --accent: #38d6b0;
+    --accent-2: #5b8cff;
+    --star: #ffc857;
+    --danger: #ff6b81;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(circle at 20% 0%, #13203a 0%, var(--bg) 45%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 50px 16px 70px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 30px; }
+  header h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); margin-bottom: 10px; }
+  header h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { color: var(--muted); }
+
+  /* Summary bar */
+  .summary {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 26px; text-align: center; min-width: 140px;
+  }
+  .stat b { display: block; font-size: 1.6rem; color: var(--accent); }
+  .stat small { color: var(--muted); }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    justify-content: space-between; margin-bottom: 24px;
+  }
+  .toolbar input, .toolbar select {
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 0.95rem; outline: none;
+  }
+  .toolbar input { flex: 1; min-width: 200px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--accent); }
+  .btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #04121a; font-weight: 700; border: none;
+    padding: 10px 20px; border-radius: 10px; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56, 214, 176, 0.25); }
+
+  /* Masonry wall */
+  .wall { column-count: 3; column-gap: 18px; }
+  @media (max-width: 900px) { .wall { column-count: 2; } }
+  @media (max-width: 600px) { .wall { column-count: 1; } }
+
+  .card {
+    break-inside: avoid;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px; margin-bottom: 18px;
+    transition: transform 0.25s, border-color 0.25s;
+    animation: pop 0.4s ease both;
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+  @keyframes pop { from { opacity: 0; transform: scale(0.94) translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .card .top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: grid; place-items: center; font-weight: 700; color: #fff;
+  }
+  .card h3 { font-size: 1rem; }
+  .card .role { font-size: 0.8rem; color: var(--muted); }
+  .stars { color: var(--star); letter-spacing: 2px; margin-bottom: 10px; }
+  .stars .off { color: #343f5b; }
+  .msg { color: #c3cbe0; line-height: 1.65; font-size: 0.94rem; }
+  .more {
+    background: none; border: none; color: var(--accent);
+    cursor: pointer; font-size: 0.85rem; margin-top: 6px; padding: 0;
+  }
+  .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--muted);
+  }
+  .like {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 5px 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .like:hover { border-color: var(--danger); color: var(--danger); }
+  .like.liked { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  .empty { text-align: center; color: var(--muted); padding: 50px 0; }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(3, 6, 12, 0.75);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 28px; width: 100%; max-width: 440px;
+    animation: pop 0.3s ease both;
+  }
+  .modal h2 { margin-bottom: 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 0.95rem; font-family: inherit; outline: none;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 90px; }
+  .star-pick { display: flex; gap: 4px; }
+  .star-pick button {
+    background: none; border: none; font-size: 1.7rem; cursor: pointer;
+    color: #343f5b; transition: color 0.15s, transform 0.15s;
+  }
+  .star-pick button.on { color: var(--star); }
+  .star-pick button:hover { transform: scale(1.2); }
+  .error { color: var(--danger); font-size: 0.82rem; min-height: 1.1em; margin-bottom: 8px; }
+  .modal .actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn.ghost:hover { box-shadow: none; color: var(--text); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Loved by <span>our customers</span></h1>
+    <p>Read what people say, or share your own experience.</p>
+  </header>
+
+  <div class="summary">
+    <div class="stat"><b id="statCount">0</b><small>Reviews</small></div>
+    <div class="stat"><b id="statAvg">0.0</b><small>Average rating</small></div>
+    <div class="stat"><b id="statLikes">0</b><small>Total likes</small></div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Search by name, role or text..." aria-label="Search testimonials">
+    <select id="sort" aria-label="Sort testimonials">
+      <option value="newest">Newest first</option>
+      <option value="rating">Top rated</option>
+      <option value="liked">Most liked</option>
+    </select>
+    <button class="btn" id="openForm">+ Add testimonial</button>
+  </div>
+
+  <div class="wall" id="wall"></div>
+</div>
+
+<!-- Add testimonial modal -->
+<div class="overlay" id="overlay">
+  <form class="modal" id="form" novalidate>
+    <h2>Share your experience</h2>
+    <div class="field">
+      <label for="fName">Name</label>
+      <input id="fName" maxlength="40" placeholder="Your name">
+    </div>
+    <div class="field">
+      <label for="fRole">Role</label>
+      <input id="fRole" maxlength="40" placeholder="e.g. Student">
+    </div>
+    <div class="field">
+      <label>Rating</label>
+      <div class="star-pick" id="starPick"></div>
+    </div>
+    <div class="field">
+      <label for="fMsg">Your feedback</label>
+      <textarea id="fMsg" maxlength="400" placeholder="Write a few lines..."></textarea>
+    </div>
+    <div class="error" id="err"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="cancel">Cancel</button>
+      <button type="submit" class="btn">Submit</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // ---------- Data ----------
+  let items = [
+    { id: 1, name: "Priya Sharma", role: "Product Manager", rating: 5, likes: 12, time: 1,
+      text: "The platform completely transformed how our team collaborates. Setup took minutes and the results were immediate. Our weekly planning meetings are now half as long and twice as useful." },
+    { id: 2, name: "Arjun Mehta", role: "Freelance Designer", rating: 5, likes: 8, time: 2,
+      text: "Clean interface and brilliant support." },
+    { id: 3, name: "Sneha Iyer", role: "Startup Founder", rating: 4, likes: 5, time: 3,
+      text: "Great value for money. It helped us launch faster and keep our customers happy from day one. A couple of extra integrations would make it perfect, but the team ships updates quickly." },
+    { id: 4, name: "Rahul Verma", role: "Software Engineer", rating: 5, likes: 15, time: 4,
+      text: "Well documented and reliable. Integration with our stack was smooth." },
+    { id: 5, name: "Divya Nair", role: "Content Creator", rating: 4, likes: 3, time: 5,
+      text: "My workflow is so much quicker now. The templates are beautiful and easy to customise, and exporting my work takes just one click." },
+    { id: 6, name: "Karthik Raj", role: "Data Analyst", rating: 5, likes: 9, time: 6,
+      text: "Powerful features without the clutter." }
+  ];
+  let nextId = 7;
+  const liked = new Set();
+  let pickedRating = 0;
+
+  // Optional persistence (safe if storage is unavailable)
+  try {
+    const saved = JSON.parse(localStorage.getItem("tw_items"));
+    if (Array.isArray(saved) && saved.length) {
+      items = saved;
+      nextId = Math.max(...items.map(i => i.id)) + 1;
+    }
+  } catch (e) {}
+  function save() { try { localStorage.setItem("tw_items", JSON.stringify(items)); } catch (e) {} }
+
+  // ---------- Helpers ----------
+  const $ = id => document.getElementById(id);
+  const colors = ["#5b8cff", "#38d6b0", "#a56cff", "#ff8a5b", "#ff6b9d", "#2fb8ff"];
+  const colorFor = name => colors[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length];
+  const initials = n => n.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const esc = s => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const starsHtml = n => "★".repeat(n) + `<span class="off">${"★".repeat(5 - n)}</span>`;
+  const LIMIT = 120;
+
+  // ---------- Render ----------
+  function visibleItems() {
+    const q = $("search").value.trim().toLowerCase();
+    let list = items.filter(i => (i.name + " " + i.role + " " + i.text).toLowerCase().includes(q));
+    const s = $("sort").value;
+    if (s === "newest") list.sort((a, b) => b.time - a.time === 0 ? 0 : a.time - b.time);
+    if (s === "rating") list.sort((a, b) => b.rating - a.rating);
+    if (s === "liked") list.sort((a, b) => b.likes - a.likes);
+    return list;
+  }
+
+  function render() {
+    const list = visibleItems();
+    $("wall").innerHTML = list.length ? list.map(i => {
+      const long = i.text.length > LIMIT;
+      return `
+      <article class="card" data-id="${i.id}">
+        <div class="top">
+          <div class="avatar" style="background:${colorFor(i.name)}">${esc(initials(i.name))}</div>
+          <div><h3>${esc(i.name)}</h3><div class="role">${esc(i.role)}</div></div>
+        </div>
+        <div class="stars" aria-label="${i.rating} out of 5">${starsHtml(i.rating)}</div>
+        <p class="msg" data-full="${esc(i.text)}">${esc(long ? i.text.slice(0, LIMIT) + "…" : i.text)}</p>
+        ${long ? '<button class="more">Read more</button>' : ""}
+        <div class="foot">
+          <span>Verified customer</span>
+          <button class="like ${liked.has(i.id) ? "liked" : ""}">♥ ${i.likes}</button>
+        </div>
+      </article>`;
+    }).join("") : '<p class="empty">No testimonials match your search.</p>';
+    updateStats();
+  }
+
+  function updateStats() {
+    $("statCount").textContent = items.length;
+    const avg = items.reduce((a, i) => a + i.rating, 0) / (items.length || 1);
+    $("statAvg").textContent = avg.toFixed(1);
+    $("statLikes").textContent = items.reduce((a, i) => a + i.likes, 0);
+  }
+
+  // ---------- Card interactions (event delegation) ----------
+  $("wall").addEventListener("click", e => {
+    const card = e.target.closest(".card");
+    if (!card) return;
+    const item = items.find(i => i.id === Number(card.dataset.id));
+
+    if (e.target.classList.contains("like")) {
+      if (liked.has(item.id)) { liked.delete(item.id); item.likes--; }
+      else { liked.add(item.id); item.likes++; }
+      save(); render();
+    }
+    if (e.target.classList.contains("more")) {
+      const msg = card.querySelector(".msg");
+      const open = e.target.textContent === "Show less";
+      msg.textContent = open ? item.text.slice(0, LIMIT) + "…" : item.text;
+      e.target.textContent = open ? "Read more" : "Show less";
+    }
+  });
+
+  $("search").addEventListener("input", render);
+  $("sort").addEventListener("change", render);
+
+  // ---------- Modal / form ----------
+  function buildStars() {
+    $("starPick").innerHTML = "";
+    for (let n = 1; n <= 5; n++) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "★";
+      b.setAttribute("aria-label", n + " star" + (n > 1 ? "s" : ""));
+      b.className = n <= pickedRating ? "on" : "";
+      b.onclick = () => { pickedRating = n; buildStars(); };
+      $("starPick").appendChild(b);
+    }
+  }
+  function openModal() {
+    pickedRating = 0; buildStars();
+    $("form").reset(); $("err").textContent = "";
+    $("overlay").classList.add("open");
+    $("fName").focus();
+  }
+  function closeModal() { $("overlay").classList.remove("open"); }
+
+  $("openForm").onclick = openModal;
+  $("cancel").onclick = closeModal;
+  $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+  $("form").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("fName").value.trim();
+    const role = $("fRole").value.trim() || "Customer";
+    const text = $("fMsg").value.trim();
+    if (!name) return ($("err").textContent = "Please enter your name.");
+    if (!pickedRating) return ($("err").textContent = "Please choose a star rating.");
+    if (text.length < 10) return ($("err").textContent = "Feedback should be at least 10 characters.");
+
+    const newest = Math.min(...items.map(i => i.time)) - 1;
+    items.push({ id: nextId++, name, role, rating: pickedRating, likes: 0, time: newest, text });
+    save(); closeModal();
+    $("sort").value = "newest"; $("search").value = "";
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
